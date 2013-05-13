@@ -24,8 +24,8 @@
   </connectionProvider>
   <database>
     <defaultProvider>
-      <driver><%= node[:openfire][:config][:database][:driver] %></driver>
-      <serverURL><%= node[:openfire][:config][:database][:server_url] %></serverURL>
+      <driver><%= node[:openfire][:database][:driver] %></driver>
+      <serverURL><%= node[:openfire][:database][:server_url] %></serverURL>
       <username><%= node[:openfire][:database][:user] %></username>
       <password><%= node[:openfire][:database][:password] %></password>
       <testSQL>select 1</testSQL>

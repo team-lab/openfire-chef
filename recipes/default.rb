@@ -1,8 +1,12 @@
 include_recipe "java::default"
 
-if node[:openfire][:database][:active]
-  include_recipe "openfire::database"
-end
+db = node[:openfire][:database]
+# missing critical db info, skip db configs
+node.set_unless[:openfire][:database][:active] = !( db[:type].nil? or db[:password].nil? )
+
+node.set_unless[:openfire][:home_dir] = File.join(node[:openfire][:base_dir],"openfire")
+node.set_unless[:openfire][:plugin_dir] = File.join(node[:openfire][:home_dir],'plugins')
+node.set_unless[:openfire][:source_checksum] = node[:openfire][:source_checksums][node[:openfire][:source_tarball]]
 
 group node[:openfire][:group] do
   system true
@@ -20,6 +24,7 @@ local_tarball_path = "#{Chef::Config[:file_cache_path]}/#{node[:openfire][:sourc
 remote_file local_tarball_path do
   checksum node[:openfire][:source_checksum]
   source "http://www.igniterealtime.org/downloadServlet?filename=openfire/#{node[:openfire][:source_tarball]}"
+  not_if { ::File.exists?(node[:openfire][:home_dir]) }
 end
 
 bash "install_openfire" do
@@ -33,6 +38,7 @@ bash "install_openfire" do
     mv #{node[:openfire][:home_dir]}/resources/security /etc/openfire
   EOH
   creates node[:openfire][:home_dir]
+  not_if { ::File.exists?(node[:openfire][:home_dir]) }
 end
 
 # link to LSB-recommended directories
@@ -55,11 +61,15 @@ directory '/etc/openfire/security' do
   owner 'openfire'
 end
 
+if node[:openfire][:database][:active]
+  include_recipe "openfire::database"
+end
+
 template '/etc/openfire/openfire.xml' do
-  action :create_if_missing
   group 'openfire'
   mode '0600'
   owner 'openfire'
+#  notifies :restart , resources( :service => :openfire )
 end
 
 cookbook_file "/etc/init.d/openfire" do
