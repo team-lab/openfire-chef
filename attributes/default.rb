@@ -15,7 +15,6 @@ checksums = {
 }
 
 default[:openfire][:source_checksum] = checksums[openfire[:source_tarball]]
-default[:openfire][:rpm_checksum] = checksums[openfire[:rpm_file]]
 
 default[:openfire][:base_dir] = '/opt'
 default[:openfire][:home_dir] = "#{openfire[:base_dir]}/openfire"
