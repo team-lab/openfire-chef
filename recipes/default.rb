@@ -15,24 +15,11 @@ user node[:openfire][:user] do
   shell '/bin/sh'
 end
 
-local_tarball_path = "#{Chef::Config[:file_cache_path]}/#{node[:openfire][:source_tarball]}"
-
-remote_file local_tarball_path do
-  checksum node[:openfire][:source_checksum]
-  source "http://www.igniterealtime.org/downloadServlet?filename=openfire/#{node[:openfire][:source_tarball]}"
-end
-
-bash "install_openfire" do
-  cwd node[:openfire][:base_dir]
-  code <<-EOH
-    tar xzf #{local_tarball_path}
-    chown -R #{node[:openfire][:user]}:#{node[:openfire][:group]} #{node[:openfire][:home_dir]}
-    mv #{node[:openfire][:home_dir]}/conf /etc/openfire
-    rm /etc/openfire/openfire.xml
-    mv #{node[:openfire][:home_dir]}/logs /var/log/openfire
-    mv #{node[:openfire][:home_dir]}/resources/security /etc/openfire
-  EOH
-  creates node[:openfire][:home_dir]
+case node[:openfire][:install_method]
+when "rpm"
+  include_recipe 'openfire::rpm'
+when "source"
+  include_recipe 'openfire::source'
 end
 
 # link to LSB-recommended directories
@@ -66,11 +53,14 @@ cookbook_file "/etc/init.d/openfire" do
   mode '0755'
 end
 
-# on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
-# make a symlink so that openfirectl is happy
-link '/etc/sysconfig' do
-  to '/etc/default'
-  only_if { node[:platform_family] == 'debian' }
+case node[:platform_family]
+when "debian", "ubuntu"
+  # on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
+  # make a symlink so that openfirectl is happy
+  link '/etc/sysconfig' do
+    to '/etc/default'
+    only_if { node[:platform_family] == 'debian' }
+  end
 end
 
 template '/etc/sysconfig/openfire' do
