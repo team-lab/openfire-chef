@@ -18,22 +18,36 @@ end
 case node[:openfire][:install_method]
 when "rpm"
   include_recipe 'openfire::rpm'
+
+  link "/etc/openfire" do 
+    to "#{node[:openfire][:home_dir]}/conf"
+  end
+
+  link "/var/log/openfire" do 
+    to "#{node[:openfire][:home_dir]}/logs"
+  end
+
+  link "/etc/openfire/security" do
+    to "#{node[:openfire][:home_dir]}/resources/security"
+  end
 when "source"
   include_recipe 'openfire::source'
+
+  # link to LSB-recommended directories
+  link "#{node[:openfire][:home_dir]}/conf" do
+    to '/etc/openfire'
+  end
+
+  link "#{node[:openfire][:home_dir]}/logs" do
+    to '/var/log/openfire'
+  end
+
+  link "#{node[:openfire][:home_dir]}/resources/security" do
+    to '/etc/openfire/security'
+  end
+
 end
 
-# link to LSB-recommended directories
-link "#{node[:openfire][:home_dir]}/conf" do
-  to '/etc/openfire'
-end
-
-link "#{node[:openfire][:home_dir]}/logs" do
-  to '/var/log/openfire'
-end
-
-link "#{node[:openfire][:home_dir]}/resources/security" do
-  to '/etc/openfire/security'
-end
 
 # this directory contains keys, so lock down its permissions
 directory '/etc/openfire/security' do
