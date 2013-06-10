@@ -6,4 +6,4 @@ end
 exec "javac KeyStoreImport.java" do 
   creates "#{node[:openfire][:home_dir]}/KeyStoreImport.class"
   cwd "#{node[:openfire][:home_dir]}"
-en
+end
