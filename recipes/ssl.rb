@@ -3,8 +3,7 @@ cookbook_file "#{node[:openfire][:home_dir]}/KeyStoreImport.java" do
   source 'KeyStoreImport.java'
 end
 
-exec "build KeyStoreImport.java" do 
-  command "javac KeyStoreImport.java"
+exec "javac KeyStoreImport.java" do 
   creates "#{node[:openfire][:home_dir]}/KeyStoreImport.class"
   cwd "#{node[:openfire][:home_dir]}"
-end
+en
