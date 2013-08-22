@@ -1,12 +1,8 @@
 include_recipe "java::default"
 
-db = node[:openfire][:database]
-# missing critical db info, skip db configs
-node.set_unless[:openfire][:database][:active] = !( db[:type].nil? or db[:password].nil? )
-
-node.set_unless[:openfire][:home_dir] = File.join(node[:openfire][:base_dir],"openfire")
-node.set_unless[:openfire][:plugin_dir] = File.join(node[:openfire][:home_dir],'plugins')
-node.set_unless[:openfire][:source_checksum] = node[:openfire][:source_checksums][node[:openfire][:source_tarball]]
+#if node[:openfire][:database][:active]
+#  include_recipe "openfire::database"
+#end
 
 group node[:openfire][:group] do
   system true
@@ -19,40 +15,39 @@ user node[:openfire][:user] do
   shell '/bin/sh'
 end
 
-local_tarball_path = "#{Chef::Config[:file_cache_path]}/#{node[:openfire][:source_tarball]}"
+case node[:openfire][:install_method]
+when "rpm"
+  include_recipe 'openfire::rpm'
 
-remote_file local_tarball_path do
-  checksum node[:openfire][:source_checksum]
-  source "http://www.igniterealtime.org/downloadServlet?filename=openfire/#{node[:openfire][:source_tarball]}"
-  not_if { ::File.exists?(node[:openfire][:home_dir]) }
+  link "/etc/openfire" do 
+    to "#{node[:openfire][:home_dir]}/conf"
+  end
+
+  link "/var/log/openfire" do 
+    to "#{node[:openfire][:home_dir]}/logs"
+  end
+
+  link "/etc/openfire/security" do
+    to "#{node[:openfire][:home_dir]}/resources/security"
+  end
+when "source"
+  include_recipe 'openfire::source'
+
+  # link to LSB-recommended directories
+  link "#{node[:openfire][:home_dir]}/conf" do
+    to '/etc/openfire'
+  end
+
+  link "#{node[:openfire][:home_dir]}/logs" do
+    to '/var/log/openfire'
+  end
+
+  link "#{node[:openfire][:home_dir]}/resources/security" do
+    to '/etc/openfire/security'
+  end
+
 end
 
-bash "install_openfire" do
-  cwd node[:openfire][:base_dir]
-  code <<-EOH
-    tar xzf #{local_tarball_path}
-    chown -R #{node[:openfire][:user]}:#{node[:openfire][:group]} #{node[:openfire][:home_dir]}
-    mv #{node[:openfire][:home_dir]}/conf /etc/openfire
-    rm /etc/openfire/openfire.xml
-    mv #{node[:openfire][:home_dir]}/logs /var/log/openfire
-    mv #{node[:openfire][:home_dir]}/resources/security /etc/openfire
-  EOH
-  creates node[:openfire][:home_dir]
-  not_if { ::File.exists?(node[:openfire][:home_dir]) }
-end
-
-# link to LSB-recommended directories
-link "#{node[:openfire][:home_dir]}/conf" do
-  to '/etc/openfire'
-end
-
-link "#{node[:openfire][:home_dir]}/logs" do
-  to '/var/log/openfire'
-end
-
-link "#{node[:openfire][:home_dir]}/resources/security" do
-  to '/etc/openfire/security'
-end
 
 # this directory contains keys, so lock down its permissions
 directory '/etc/openfire/security' do
@@ -76,11 +71,14 @@ cookbook_file "/etc/init.d/openfire" do
   mode '0755'
 end
 
-# on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
-# make a symlink so that openfirectl is happy
-link '/etc/sysconfig' do
-  to '/etc/default'
-  only_if { node[:platform_family] == 'debian' }
+case node[:platform_family]
+when "debian", "ubuntu"
+  # on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
+  # make a symlink so that openfirectl is happy
+  link '/etc/sysconfig' do
+    to '/etc/default'
+    only_if { node[:platform_family] == 'debian' }
+  end
 end
 
 template '/etc/sysconfig/openfire' do

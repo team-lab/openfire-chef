@@ -1,3 +1,11 @@
+default[:openfire][:install_method] = case node[:platform_family]
+  when 'rhel', 'centos'
+    'rpm'
+  else
+    'source'
+end
+
+default[:openfire][:rpm_file] = 'openfire-3.8.2-1.i386.rpm'
 default[:openfire][:source_tarball] = 'openfire_3_8_1.tar.gz'
 # precalculated checksums: `sha256sum openfire_v_v_v.tar.gz | cut -c1-16`
 default[:openfire][:source_checksums] = {
