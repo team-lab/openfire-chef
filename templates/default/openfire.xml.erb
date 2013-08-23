@@ -36,5 +36,7 @@
       <connectionTimeout>1.0</connectionTimeout>
     </defaultProvider>
   </database>
-<% end %>
+<% end
+   if @setup %>
+  <setup>true</setup><% end -%>
 </jive>

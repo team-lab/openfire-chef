@@ -5,8 +5,10 @@ default[:openfire][:install_method] = case node[:platform_family]
     'source'
 end
 
-default[:openfire][:rpm_file] = 'openfire-3.8.2-1.i386.rpm'
-default[:openfire][:source_tarball] = 'openfire_3_8_1.tar.gz'
+default[:openfire][:version] = '3.8.2'
+default[:openfire][:release] = '1'
+default[:openfire][:rpm_file] = "openfire-#{node[:openfire][:version]}-#{node[:openfire][:release]}.i386.rpm"
+default[:openfire][:source_tarball] = "openfire_#{node[:openfire][:version].gsub('.','_')}.tar.gz"
 # precalculated checksums: `sha256sum openfire_v_v_v.tar.gz | cut -c1-16`
 default[:openfire][:source_checksums] = {
 	'openfire_3_8_1.tar.gz' => '554dce3a1b0a0b88',
@@ -16,8 +18,13 @@ default[:openfire][:source_checksums] = {
 default[:openfire][:base_dir] = '/opt'
 default[:openfire][:log_dir] = '/var/log/openfire'
 
-default[:openfire][:user] = 'openfire'
-default[:openfire][:group] = 'openfire'
+if node[:openfire][:install_method] != 'rpm'
+  default[:openfire][:user] = 'openfire'
+  default[:openfire][:group] = 'openfire'
+else
+  default[:openfire][:user] = 'daemon'
+  default[:openfire][:group] = 'daemon'
+end
 
 default[:openfire][:pidfile] = '/var/run/openfire.pid'
 

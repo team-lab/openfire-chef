@@ -1,19 +1,5 @@
-include_recipe "java::default"
 
-#if node[:openfire][:database][:active]
-#  include_recipe "openfire::database"
-#end
-
-group node[:openfire][:group] do
-  system true
-end
-
-user node[:openfire][:user] do
-  gid node[:openfire][:group]
-  home node[:openfire][:home_dir]
-  system true
-  shell '/bin/sh'
-end
+node.default[:openfire][:home_dir] = "#{node.openfire[:base_dir]}/openfire"
 
 case node[:openfire][:install_method]
 when "rpm"
@@ -30,7 +16,21 @@ when "rpm"
   link "/etc/openfire/security" do
     to "#{node[:openfire][:home_dir]}/resources/security"
   end
+
 when "source"
+  include_recipe "java::default"
+
+  group node[:openfire][:group] do
+    system true
+  end
+  
+  user node[:openfire][:user] do
+    gid node[:openfire][:group]
+    home node[:openfire][:home_dir]
+    system true
+    shell '/bin/sh'
+  end
+
   include_recipe 'openfire::source'
 
   # link to LSB-recommended directories
@@ -46,29 +46,44 @@ when "source"
     to '/etc/openfire/security'
   end
 
-end
+  cookbook_file "/etc/init.d/openfire" do
+    mode '0755'
+  end
 
+  template '/etc/sysconfig/openfire' do
+    mode '0644'
+  end
 
-# this directory contains keys, so lock down its permissions
-directory '/etc/openfire/security' do
-  group 'openfire'
-  mode '0700'
-  owner 'openfire'
+  # this directory contains keys, so lock down its permissions
+  directory '/etc/openfire/security' do
+    group node[:openfire][:group]
+    mode '0700'
+    owner node[:openfire][:group]
+  end
 end
 
 if node[:openfire][:database][:active]
   include_recipe "openfire::database"
 end
 
-template '/etc/openfire/openfire.xml' do
-  group 'openfire'
-  mode '0600'
-  owner 'openfire'
-#  notifies :restart , resources( :service => :openfire )
-end
 
-cookbook_file "/etc/init.d/openfire" do
-  mode '0755'
+def chek_openfire_setup
+  conf_file = "/etc/openfire/openfire.xml"
+  return false unless File.exists?(conf_file)
+  require 'rexml/document'
+  doc = REXML::Document.new(open(conf_file)).elements['jive/setup']
+  doc and text.to_s == 'true'
+end
+openfire_setup = chek_openfire_setup
+
+template '/etc/openfire/openfire.xml' do
+  group node[:openfire][:group]
+  mode '0600'
+  owner node[:openfire][:group]
+  variables({ 
+    :setup => openfire_setup
+  })
+  notifies :restart , "service[openfire]"
 end
 
 case node[:platform_family]
@@ -81,9 +96,6 @@ when "debian", "ubuntu"
   end
 end
 
-template '/etc/sysconfig/openfire' do
-  mode '0644'
-end
 
 service "openfire" do
   supports :status => true, 

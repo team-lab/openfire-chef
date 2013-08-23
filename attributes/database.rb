@@ -7,3 +7,4 @@ default[:openfire][:database][:name] = 'openfire'
 default[:openfire][:database][:user] = 'openfire'
 default[:openfire][:database][:host] = '127.0.0.1'
 default[:openfire][:database][:port] = nil # (derived from :type)
+

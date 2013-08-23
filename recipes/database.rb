@@ -1,20 +1,25 @@
 db = node[:openfire][:database]
-node.set_unless[:openfire][:database][:local] = (db[:host] == '127.0.0.1' or db[:host] == 'localhost')
 
 case db[:type]
 when 'postgresql'
-  node.set_unless[:openfire][:database][:port] = 5342
-  node.set_unless[:openfire][:database][:driver] = "org.postgresql.Driver"
-  node.set_unless[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  node.default[:openfire][:database][:port] = 5342
+  node.default[:openfire][:database][:driver] = "org.postgresql.Driver"
+  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  node.default[:openfire][:database][:active] = true
 when 'mysql'
-  node.set_unless[:openfire][:database][:port] = 3306
-  node.set_unless[:openfire][:database][:driver] = "com.mysql.jdbc.Driver"
-  node.set_unless[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  node.default[:openfire][:database][:port] = 3306
+  node.default[:openfire][:database][:driver] = "com.mysql.jdbc.Driver"
+  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  node.default[:openfire][:database][:active] = true
+when nil
+  ;;
 else
   raise "don't know how to set a port for db type #{db[:type]}"
 end
 
 return unless db[:active]
+
+node.set_unless[:openfire][:database][:local] = (db[:host] == '127.0.0.1' or db[:host] == 'localhost')
 
 case db[:type]
 
