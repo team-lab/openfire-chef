@@ -1,63 +1,25 @@
 require 'net/http'
 require "nokogiri"
 require 'open-uri'
+$: << File.dirname(__FILE__)
+require 'openfire_admin/http_client'
+require 'openfire_admin/response_exception'
 
 # openfire admin operator
 class OpenfireAdmin
   NBSP = Nokogiri::HTML("&nbsp;").text
-  # http client ( cookie support )
-  class HttpClient
-    def initialize(url)
-			@cookies = {}
-			@url = url
-      requrie 'net/https' if @url.scheme == 'https'
-		end
-
-	  def request(req)
-	    Net::HTTP.start(@url.host, @url.port) do |http|
-        http.use_ssl = true if @url.scheme == 'https'
-			  puts "#{req.method} #{req.path}" if @verbos
-	  	  req['Host'] = @url.host
-	  	  req['Cookie'] = @cookies.map{|k,v| "#{k}=#{v}"}.join(";") unless @cookies.empty?
-	  	  res = http.request(req)
-	  	  cookies = res.get_fields('Set-Cookie')
-	  	  cookies.each{|str|
-	  	  	k,v = str[0...str.index(';')].split('=')
-	  	  	@cookies[k] = v
-	  	  } if cookies
-	  	  if @verbos
-	  	    puts "#{res.code} #{res.message}"
-	  	    res.each{|k,v| puts "#{k}=#{v}" }
-	  	  end
-				yield res
-	  	end
-	  end
-
-    # post with form data
-	  def post(path, form_data)
-	  	req = Net::HTTP::Post.new(path)
-	  	req.set_form_data(form_data)
-	    request(req){|res|  yield res }
-	  end
-
-    # get path
-	  def get(path)
-	    request(Net::HTTP::Get.new(path)){|res| yield res }
-	  end
-	end
 
   # pure admin console client
   class AdminClient
-    def initialize(user,pass,loginurl)
+    def initialize(loginurl)
       @http = HttpClient.new(URI.parse(loginurl))
-      login(user,pass)
     end
-    def login(user,pass)
+    def login(username, pass)
 			@http.post( "/login.jsp" , {
 					"login"=> "true",
 					"password"=>pass,
 					"url"=>"/index.jsp",
-					"username"=>user}) do |res|
+					"username"=>username}) do |res|
 				raise ResponceException.new("can't login",res) unless res.code == "302"
 			end
     end
@@ -81,8 +43,9 @@ class OpenfireAdmin
     def get_properties
       ret = {}
 	    @http.get("/server-properties.jsp") do |res|
+        raise ResponceException.new("can't read",res) unless res.code== "200"
         doc = Nokogiri::HTML(res.body)
-  	  	doc.at('h1').parent.at('table').search('tbody tr[class=""]').each do |tr|
+        doc.search('//h1/parent::node()//table/tbody/tr[@class=""]').each do |tr|
           ret[tr.at('td span')[:title]]= tr.at('td[2] span')[:title]
         end
 		  end
@@ -141,20 +104,31 @@ class OpenfireAdmin
         ! Nokogiri::HTML(res.body).at("div[class='jive-success']").nil?
       end
     end
+    def setup_mode?
+      @http.get("/login.jsp") do |res|
+        res.code == "302" and res["location"] =~ "/setup/"
+      end
+    end
+  end
+  def setup_mode?
+    @client.setup_mode?
+  end
+  def setup
+    require File.join(File.dirname(__FILE__),"openfire_admin_setup")
+    SetupWizard.new(@http)
   end
 
-  # unexpected response found exception
-	class ResponceException < Exception
-	  attr_reader :response
-	  def initialize(message,res)
-		  super(message)
-			@response = res
-		end
+  def initialize(loginurl="http://localhost:9090")
+	  @client = AdminClient.new(loginurl)
 	end
-  
-  def initialize(user,pass,loginurl="http://localhost:9090")
-	  @client = AdminClient.new(user,pass,loginurl)
-	end
+  def logined?
+    @logined
+  end
+
+  def login(username, password)
+    @client.login(username, password)
+    @logined = true
+  end
 
   # System property map
   class PropertyMap

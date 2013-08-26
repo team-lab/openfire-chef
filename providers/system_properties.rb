@@ -1,23 +1,36 @@
 action :update do
-  @props = new_resource.client.system_properties
+  client = new_resource.client
+  props = if client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) and !client.logined?
+             events.whyrun_assumption(@action, @resource, "Can't read current system proerties ( #{client.status} )")
+             :whyrun
+           else
+             client.system_properties
+           end
+    
   diffs = {}
   new_resource.properties.map{|k,v|
-    old = @props[k]
-    newvalue = v.to_s unless v.nil?
-    if old != newvalue
-      diffs[k]=v
+    if props == :whyrun
+      diffs[k] = { :new => v, :whyrun => true }
+    else
+      old = props[k]
+      newvalue = v.to_s unless v.nil?
+      if old != newvalue
+        diffs[k]={ :old => old, :new => v }
+      end
     end
   }
   diffs.map{|k,v|
-    message = if old
-          "change #{k} from #{old} to #{v}"
-              elsif newvalue
-          "create #{k} = #{newvalue}"
+    message = if v[:whyrun]
+                v[:new] ? "set #{k} to #{v[:new]}" : "remove #{k}"
+              elsif v[:old]
+                "change #{k} from #{v[:old]} to #{v[:new]}"
+              elsif v[:new]
+                "create #{k} = #{v[:new]}"
               else
-          "delete #{k} = #{old}"
+                "delete #{k} = #{v[:old]}"
               end
     converge_by(message) do
-      @props[k]=v
+      props[k]=v[:new]
     end
   }
 end

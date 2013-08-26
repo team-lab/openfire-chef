@@ -9,7 +9,7 @@ when 'postgresql'
 when 'mysql'
   node.default[:openfire][:database][:port] = 3306
   node.default[:openfire][:database][:driver] = "com.mysql.jdbc.Driver"
-  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}?rewriteBatchedStatements=true"
   node.default[:openfire][:database][:active] = true
 when nil
   ;;
@@ -87,12 +87,6 @@ when 'mysql'
 			owner db[:user]
 			notifies :query, resources( :mysql_database  => "import_ddl" ), :immediately
 		end
-
-	  openfire_property "mysql" do
-	  	database node[:openfire][:database]
-	  	property node[:openfire][:property]
-	    action :create
-	  end
 
 	end
 

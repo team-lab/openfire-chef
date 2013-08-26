@@ -67,21 +67,12 @@ if node[:openfire][:database][:active]
 end
 
 
-def chek_openfire_setup
-  conf_file = "/etc/openfire/openfire.xml"
-  return false unless File.exists?(conf_file)
-  require 'rexml/document'
-  doc = REXML::Document.new(open(conf_file)).elements['jive/setup']
-  doc and text.to_s == 'true'
-end
-openfire_setup = chek_openfire_setup
-
 template '/etc/openfire/openfire.xml' do
   group node[:openfire][:group]
   mode '0600'
   owner node[:openfire][:group]
   variables({ 
-    :setup => openfire_setup
+    :setup => Openfire.xml_setuped?(name)
   })
   notifies :restart , "service[openfire]"
 end
