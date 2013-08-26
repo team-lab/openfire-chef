@@ -4,12 +4,14 @@ case db[:type]
 when 'postgresql'
   node.default[:openfire][:database][:port] = 5342
   node.default[:openfire][:database][:driver] = "org.postgresql.Driver"
-  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}"
+  db = node.openfire.database
+  node.default[:openfire][:database][:server_url] = "jdbc:mysql://#{db.host}:#{db.port}/#{db.name}?rewriteBatchedStatements=true"
   node.default[:openfire][:database][:active] = true
 when 'mysql'
   node.default[:openfire][:database][:port] = 3306
   node.default[:openfire][:database][:driver] = "com.mysql.jdbc.Driver"
-  node.default[:openfire][:database][:server_url] = "jdbc:#{db[:type]}://#{db[:host]}:#{db[:port]}/#{db[:name]}?rewriteBatchedStatements=true"
+  db = node.openfire.database
+  node.default[:openfire][:database][:server_url] = "jdbc:mysql://#{db.host}:#{db.port}/#{db.name}?rewriteBatchedStatements=true"
   node.default[:openfire][:database][:active] = true
 when nil
   ;;

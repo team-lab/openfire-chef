@@ -11,6 +11,7 @@ class OpenfireAdmin
 
   # pure admin console client
   class AdminClient
+    attr_reader :http
     def initialize(loginurl)
       @http = HttpClient.new(URI.parse(loginurl))
     end
@@ -106,16 +107,16 @@ class OpenfireAdmin
     end
     def setup_mode?
       @http.get("/login.jsp") do |res|
-        res.code == "302" and res["location"] =~ "/setup/"
+        res.code == "302" and res["location"] =~ %r"/setup/"
       end
     end
   end
   def setup_mode?
     @client.setup_mode?
   end
-  def setup
-    require File.join(File.dirname(__FILE__),"openfire_admin_setup")
-    SetupWizard.new(@http)
+  def setup_wizard
+    require File.join(File.dirname(__FILE__),"openfire_admin/setup_wizard")
+    SetupWizard.new(@client.http)
   end
 
   def initialize(loginurl="http://localhost:9090")

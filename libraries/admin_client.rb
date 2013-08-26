@@ -1,22 +1,26 @@
 class Chef::Recipe::Openfire
   require File.join(File.dirname(__FILE__),"openfire_admin")
   class WhyrunAdmin < OpenfireAdmin
-    attr_accessor :can_login
-    def server_started?
-      @server_started
+    attr_accessor :not_setuped
+    def server_stopped?
+      @server_stopped
     end
-    def server_started=(s)
-      @server_started = s
+    def server_stopped=(s)
+      @server_stopped = s
     end
     def status
-      if server_started?
-        if logined?
-          "logined"
-        else
-          "login failed"
-        end
-      else
+      if server_stopped?
         "port not opend"
+      else
+        if not_setuped
+          "untill setup"
+        else
+          if logined?
+            "logined"
+          else
+            "login failed"
+          end
+        end
       end
     end
   end
@@ -26,16 +30,18 @@ class Chef::Recipe::Openfire
       client = WhyrunAdmin.new(baseurl)
       begin
         if client.setup_mode?
-          client.can_login = false
+          client.not_setuped = true
+        else
+          client.login(params[:username][:password])
         end
       rescue Errno::ECONNREFUSED => e
-        client.server_started = false
+        client.server_stopped = true
       end
-      client
     else
       client = OpenfireAdmin.new(baseurl)
-      client.login(params[:username][:password])
+      client.login(params[:username][:password]) unless client.setup_mode?
     end
+    client
   end
   def self.xml_setuped? conf_file
     return false unless File.exists?(conf_file)
