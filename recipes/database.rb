@@ -18,23 +18,25 @@ when nil
 else
   raise "don't know how to set a port for db type #{db[:type]}"
 end
+return unless node[:openfire][:database][:active]
 
-return unless db[:active]
-
-node.set_unless[:openfire][:database][:local] = (db[:host] == '127.0.0.1' or db[:host] == 'localhost')
+node.default[:openfire][:database][:local] = case node[:openfire][:database][:host]
+                                             when '127.0.0.1'
+                                             when 'localhost'
+                                               true
+                                             else
+                                               false
+                                             end
+db = node[:openfire][:database]
 
 case db[:type]
-
-#when 'mysql'
-	# untested
-
 when 'postgresql'
 	if db[:local]
 		# set up the database and user
 		include_recipe 'postgresql::server'
 
 		conn = {
-			:host => '127.0.0.1',
+			:host => db[:host],
 			:port => db[:port],
 			:username => 'postgres',
 			:password => node[:postgresql][:password][:postgres]
@@ -57,11 +59,9 @@ when 'postgresql'
 
 when 'mysql'
 	if db[:local]
-		# set up the database and user
-		include_recipe 'mysql::server'
-
+    include_recipe 'database::mysql'
 		conn = {
-			:host => '127.0.0.1',
+			:host => db[:host],
 			:port => db[:port],
 			:username => 'root',
 			:password => node[:mysql][:server_root_password]
@@ -89,11 +89,7 @@ when 'mysql'
 			owner db[:user]
 			notifies :query, resources( :mysql_database  => "import_ddl" ), :immediately
 		end
-
 	end
-
-	include_recipe 'database::mysql'
-
 else
 	raise "don't know how to handle database #{db[:type]}"
 end

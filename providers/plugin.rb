@@ -1,7 +1,8 @@
 def whyrun_supported?
     true
 end
-def current_plugins client
+def current_plugins console
+  client = Chef::Recipe::Openfire::client( console )
   if client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) and !client.logined?
      events.whyrun_assumption(@action, @resource, "Can't read current installed plugins #{client.status}")
      Hash.new
@@ -11,7 +12,7 @@ def current_plugins client
 end
 
 action :install do
-  current_plugins(new_resource.client)[new_resource.name]
+  current_plugins(new_resource.console)[new_resource.name]
   unless plugin
     if new_resource.url
       converge_by("install plugin from #{new_resource.url}") do
@@ -27,7 +28,7 @@ action :install do
   end
 end
 action :reload do
-  plugin = current_plugins(new_resource.client)[new_resource.name]
+  plugin = current_plugins(new_resource.console)[new_resource.name]
   if plugin
     converge_by("reload plguin \"#{plugin.name}\"") do
       plugin.reload
@@ -35,7 +36,7 @@ action :reload do
   end
 end
 action :uninstall do
-  plugin = current_plugins(new_resource.client)[new_resource.name]
+  plugin = current_plugins(new_resource.console)[new_resource.name]
   if plugin
     converge_by("uninstall plguin \"#{plugin.name}\"") do
       plugin.uninstall

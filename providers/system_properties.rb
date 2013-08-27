@@ -1,5 +1,5 @@
 action :update do
-  client = new_resource.client
+  client = Chef::Recipe::Openfire::client( new_resource.console )
   props = if client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) and !client.logined?
              events.whyrun_assumption(@action, @resource, "Can't read current system proerties ( #{client.status} )")
              :whyrun

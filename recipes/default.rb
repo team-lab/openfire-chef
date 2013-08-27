@@ -62,18 +62,17 @@ when "source"
   end
 end
 
-if node[:openfire][:database][:active]
+if node[:openfire][:database][:type]
   include_recipe "openfire::database"
 end
 
 
-template '/etc/openfire/openfire.xml' do
+openfire_config_xml '/etc/openfire/openfire.xml' do
   group node[:openfire][:group]
   mode '0600'
-  owner node[:openfire][:group]
-  variables({ 
-    :setup => Openfire.xml_setuped?(name)
-  })
+  owner node[:openfire][:user]
+  config node[:openfire][:config]
+  database node[:openfire][:database]
   notifies :restart , "service[openfire]"
 end
 
@@ -87,15 +86,10 @@ when "debian", "ubuntu"
   end
 end
 
-
 service "openfire" do
   supports :status => true, 
            :stop => true
   action [ :enable, :start ]
 end
 
-admin_console = node[:openfire][:config][:admin_console]
-admin_port = (admin_console[:secure_port] == -1)? admin_console[:port] : admin_console[:secure_port]
-log "And now visit the server on :#{admin_port} to run the openfire wizard." do
-  action :nothing
-end
+

@@ -32,21 +32,66 @@ class Chef::Recipe::Openfire
         if client.setup_mode?
           client.not_setuped = true
         else
-          client.login(params[:username][:password])
+          client.login(params[:user],params[:password])
         end
       rescue Errno::ECONNREFUSED => e
         client.server_stopped = true
       end
     else
       client = OpenfireAdmin.new(baseurl)
-      client.login(params[:username][:password]) unless client.setup_mode?
+      client.login(params[:user], params[:password]) unless client.setup_mode?
     end
     client
+  end
+  def check_client admin_console
+    "ok"
   end
   def self.xml_setuped? conf_file
     return false unless File.exists?(conf_file)
     require 'rexml/document'
     doc = REXML::Document.new(open(conf_file)).elements['jive/setup']
     doc and doc.text.to_s == 'true'
+  end
+  def self._pv_read(data, k, prefix)
+    return data[k] if prefix.empty?
+    data = data[prefix.first]
+    return nil if data.nil?
+    _pv_read(data, k, prefix[1,prefix.size])
+  end
+  def self._pv_validate(args,prefix=[])
+    Hash[*args.map{|k,v|
+      if v.is_a? Hash
+        _pv_validate(v, prefix + [k]).to_a.flatten
+      else
+        ["need #{[prefix + [k]].join('.')}", lambda{|h| v === _pv_read(h, k,prefix) }]
+      end
+    }.flatten]
+  end
+  def self.validate(args)
+    _pv_validate(args)
+  end
+  def self.console_validator 
+    validate(
+             :user => String,
+             :password => String )
+  end
+  def self.setup_database_validator
+    validate(
+             :driver => String,
+             :server_url => String,
+             :user => String,
+             :password => String )
+
+  end
+  def self.setup_validator
+    validate(
+      :locale => String,
+      :domain => String,
+      :admin_console => {
+        :port => Integer,
+        :secure_port => Integer,
+        :user => String,
+        :password => String
+      } )
   end
 end

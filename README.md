@@ -34,14 +34,100 @@ All attributes are optional
 * `node[:openfire][:base_dir]`: the location on the file system to install openfire
 * `node[:openfire][:config][:admin_console][:port]`: Use your web browser to connect to this port while you are first setting up openfire. Defaults to 9090.
 * `node[:openfire][:config][:admin_console][:secure_port]`: Use your web browser to connect to this port after you have set up openfire for further configuration. This will require an https/SSL connection. Defaults to 9091.
+* `node[:openfire][:config][:admin_console][:user]`: Admin user login name of admin console. need this value when if you use `openfire_setup`, `openfire_plugin`, and `openfire_system_properties` resources.
+* `node[:openfire][:config][:admin_console][:password]`: Admin user password of admin console.
 * `node[:openfire][:config][:locale]`: Defaults to `en`.
 * `node[:openfire][:config][:network][:interface]`: Defaults to `nil` (listen on all interfaces).
+* `node[:openfire][:config][:domain]`: xmpp domain. This value need when You use `openfire_setup` resource. this value use only setup wizard. if setup is finished, You change 'xmpp.domain' by `openfire_system_properties`
 
 ## Database
 * `node[:openfire][:database][:type]`: currently only works with 'postgresql' or 'mysql'. If you want to use the built-in database (untested), do not set this.
 * `node[:openfire][:database][:password]`: the database password for the Openfire user (required if database type is specified)
 * `node[:openfire][:database][:name]`: default `openfire`
     * also see `[:database][:user]`, `[:database][:host]`, `[:database][:port]`, which have sane defaults
+* `node[:openfire][:database][:testSQL]`
+* `node[:openfire][:database][:testBeforeUse]`
+* `node[:openfire][:database][:testAfterUse]`
+* `node[:openfire][:database][:minConnections]`
+* `node[:openfire][:database][:maxConnections]`
+* `node[:openfire][:database][:connectionTimeout]`
+* `node[:openfire][:database][:connectionProvider]`
+
+# Resources
+
+## openfire_setup
+
+setup wizard auto running by web scraipe.
+
+### Actions
+
+supported only `:finish`. setup wizard finishing if wizard is not finished.
+
+### Attributes
+
+* `console`: admin console parameters. like node[:openfire][:config][:admin_console]
+* `config`: openfire settings. like node[:openfire][:config]
+* `database`: database setting parameters. like node[:openfire][:database]
+
+### Example
+
+```
+openfire_plugin 'dbaccess' do
+  console node[:openfire][:config][:admin_console]
+  config node[:openfire][:config]
+  database node[:openfire][:database]
+end
+```
+
+## openfire_plugin
+
+istall, or uninstall plugin by web scraipe to admin console.
+
+### Actions
+
+* `console`: admin console parameters. like node[:openfire][:config][:admin_console]
+* `:install`: install plugin
+* `:uninstall`: uninstall plugin
+
+### Attributes
+
+* `console`: admin console parameters. like node[:openfire][:config][:admin_console]
+* `name`: plugin name. it is war file name.
+* `url`: Option. Openfire download and install plugin from this value. if not setted, provider find plugin from 'Available Plugins'.
+
+### Example
+
+```
+openfire_plugin 'dbaccess' do
+  console node[:openfire][:admin_console]
+end
+```
+
+## openfire_system_properties
+
+Change system property from Web admin console by web scraipe.
+
+### Actions
+
+supported `:update` only
+
+### Attributes
+
+* `console`: admin console parameters. like node[:openfire][:config][:admin_console]
+* `properties`: openfire settings. Hash of `{propetyName=>propetyValue}`. if propetyValue is nil, provider remove it propety.
+
+
+### Example
+
+```
+openfire_system_properties '' do
+  console node[:openfire][:admin_console]
+end
+```
+
+## openfire_config_xml
+
+set '/etc/openfire/openfire.xml'
 
 
 # Usage
