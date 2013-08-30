@@ -52,7 +52,9 @@ class OpenfireAdmin
         raise ResponceException.new("can't read",res) unless res.code== "200"
         doc = Nokogiri::HTML(res.body)
         doc.search('//h1/parent::node()//table/tbody/tr[@class=""]').each do |tr|
-          ret[tr.at('td span')[:title]]= tr.at('td[2] span')[:title]
+					v = tr.at('td[2] span')[:title]
+					v = "" if v == NBSP
+          ret[tr.at('td span')[:title]]= v
         end
 		  end
       ret
