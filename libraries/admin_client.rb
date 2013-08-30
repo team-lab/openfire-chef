@@ -25,7 +25,7 @@ class Chef::Recipe::Openfire
     end
   end
   def self.client(params)
-    baseurl = "http#{params[:secure] ? 's':''}://#{params[:host] || 'localhost'}:#{params['port']}"
+    baseurl = "http#{params[:secure] ? 's':''}://#{params[:host] || 'localhost'}:#{params[:secure] ? params[:secure_port] : params[:port]}"
     if Chef::Config[:why_run]
       client = WhyrunAdmin.new(baseurl)
       begin
