@@ -85,7 +85,6 @@ istall, or uninstall plugin by web scraipe to admin console.
 
 ### Actions
 
-* `console`: admin console parameters. like node[:openfire][:config][:admin_console]
 * `:install`: install plugin
 * `:uninstall`: uninstall plugin
 
