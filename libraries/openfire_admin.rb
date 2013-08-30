@@ -75,6 +75,29 @@ class OpenfireAdmin
         end
       end
     end
+    def create_user(username,password,name,email,isadmin=false)
+      params = {
+        "create"=>"Create User",
+        "email"=> email,
+        "name"=> name,
+        "password"=> password,
+        "passwordConfirm"=>password,
+        "username"=>username }
+      params['isadmin'] = "on" if isadmin
+      @http.post("/user-create.jsp", params ) do |res|
+        raise ResponceException.new("can't create user #{username}",res ) unless res.code == "302" and res["location"] =~ /success=true/
+      end
+    end
+    def delete_user(username)
+      @http.get("/user-delete.jsp?username=#{username}&delete=Delete+User") do |res|
+        raise ResponceException.new("can't delete user #{username}",res ) unless res.code == "302" and res["location"] =~ /deletesuccess=true/
+      end
+    end
+    def user_exists?(username)
+      @http.get("/user-password.jsp?username=#{username}") do |res|
+        res.code == "200"
+      end
+    end
     def install_plugin(url)
       @http.post("/dwr/exec/downloader.installPlugin.dwr",
         "callCount"=>"1",
