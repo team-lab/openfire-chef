@@ -1,71 +1,26 @@
 
-node.default[:openfire][:home_dir] = "#{node.openfire[:base_dir]}/openfire"
+node.default[:openfire][:home_dir] = "#{node[:openfire][:base_dir]}/openfire"
 
 case node[:openfire][:install_method]
 when "rpm"
   include_recipe 'openfire::rpm'
-
-  link "/etc/openfire" do 
-    to "#{node[:openfire][:home_dir]}/conf"
-  end
-
-  link "/var/log/openfire" do 
-    to "#{node[:openfire][:home_dir]}/logs"
-  end
-
-  link "/etc/openfire/security" do
-    to "#{node[:openfire][:home_dir]}/resources/security"
-  end
-
 when "source"
-  include_recipe "java::default"
-
-  group node[:openfire][:group] do
-    system true
-  end
-  
-  user node[:openfire][:user] do
-    gid node[:openfire][:group]
-    home node[:openfire][:home_dir]
-    system true
-    shell '/bin/sh'
-  end
-
   include_recipe 'openfire::source'
+end
 
-  # link to LSB-recommended directories
-  link "#{node[:openfire][:home_dir]}/conf" do
-    to '/etc/openfire'
-  end
+directory "#{node[:openfire][:home_dir]}" do
+  mode "0755"
+  group node[:openfire][:group]
+  owner node[:openfire][:user]
+end
 
-  link "#{node[:openfire][:home_dir]}/logs" do
-    to '/var/log/openfire'
-  end
-
-  link "#{node[:openfire][:home_dir]}/resources/security" do
-    to '/etc/openfire/security'
-  end
-
-  cookbook_file "/etc/init.d/openfire" do
-    mode '0755'
-  end
-
-  template '/etc/sysconfig/openfire' do
-    mode '0644'
-  end
-
-  # this directory contains keys, so lock down its permissions
-  directory '/etc/openfire/security' do
-    group node[:openfire][:group]
-    mode '0700'
-    owner node[:openfire][:group]
-  end
+link "/etc/openfire/log4j.xml" do
+  to "#{node[:openfire][:home_dir]}/lib/log4j.xml"
 end
 
 if node[:openfire][:database][:type]
   include_recipe "openfire::database"
 end
-
 
 openfire_config_xml '/etc/openfire/openfire.xml' do
   group node[:openfire][:group]
@@ -91,5 +46,4 @@ service "openfire" do
            :stop => true
   action [ :enable, :start ]
 end
-
 

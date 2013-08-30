@@ -1,12 +1,12 @@
 # coding: utf-8
 require 'net/http'
-require 'open-uri'
-$: << File.dirname(__FILE__)
 begin
   require "nokogiri"
 rescue LoadError => e
   puts e
 end
+require 'open-uri'
+$: << File.dirname(__FILE__)
 require 'openfire_admin/http_client'
 require 'openfire_admin/response_exception'
 
