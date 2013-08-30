@@ -1,6 +1,21 @@
 def whyrun_supported?
   true
 end
+def create_admin_user
+  config = new_resource.config
+  console = new_resource.console.merge(:user=>"admin")
+  temp_admin_client = Chef::Recipe::Openfire.client(console)
+  if temp_admin_client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) or !temp_admin_client.client.user_exists?( config[:admin_console][:user] )
+    converge_by("create user #{config[:admin_console][:user]}") do
+      temp_admin_client.client.create_user(
+        new_resource.console[:user],
+        new_resource.console[:password],
+        new_resource.console[:user],
+        new_resource.console[:user],
+        true)
+    end
+  end
+end
 action :finish do
   client = Chef::Recipe::Openfire::client( new_resource.console )
   if client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) and client.server_stopped?
@@ -29,11 +44,15 @@ action :finish do
       converge_by("setup profile default") do
         setup.profile("default")
       end
-      converge_by("setup admin #{config[:admin_console][:user]}") do
-        setup.admin(config[:admin_console][:user], config[:admin_console][:password])
+      converge_by("setup admin") do
+        setup.admin("admin", new_resource.console[:password])
       end
       converge_by("setup finish") do
         setup.finish()
+        sleep 3
+      end
+      if config[:admin_console][:user] != "admin"
+        create_admin_user
       end
       unless client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin)
         client.login(config[:admin_console][:user], config[:admin_console][:password])

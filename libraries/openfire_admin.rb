@@ -13,6 +13,7 @@ require 'openfire_admin/response_exception'
 # openfire admin operator
 class OpenfireAdmin
   NBSP = "\302\240" # Nokogiri::HTML("&nbsp;").text
+  attr_reader :client
 
   # pure admin console client
   class AdminClient
