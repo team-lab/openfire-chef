@@ -23,7 +23,7 @@ action :update do
     message = if v[:whyrun]
                 v[:new] ? "set #{k} to #{v[:new]}" : "remove #{k}"
               elsif v[:old]
-                "change #{k} from #{v[:old]} to #{v[:new]}"
+                "change #{k} from \"#{v[:old]}\" to \"#{v[:new]}\""
               elsif v[:new]
                 "create #{k} = #{v[:new]}"
               else
