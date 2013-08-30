@@ -36,6 +36,7 @@ class Chef::Recipe::Openfire
         end
       rescue Errno::ECONNREFUSED => e
         client.server_stopped = true
+      rescue OpenfireAdmin::ResponceException => e
       end
     else
       client = OpenfireAdmin.new(baseurl)
