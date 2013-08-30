@@ -1,13 +1,18 @@
+# coding: utf-8
 require 'net/http'
-require "nokogiri"
 require 'open-uri'
 $: << File.dirname(__FILE__)
+begin
+  require "nokogiri"
+rescue LoadError => e
+  puts e
+end
 require 'openfire_admin/http_client'
 require 'openfire_admin/response_exception'
 
 # openfire admin operator
 class OpenfireAdmin
-  NBSP = Nokogiri::HTML("&nbsp;").text
+  NBSP = "\302\240" # Nokogiri::HTML("&nbsp;").text
 
   # pure admin console client
   class AdminClient
