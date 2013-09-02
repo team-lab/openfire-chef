@@ -60,6 +60,10 @@ class OpenfireAdmin
       self
     end
     def admin(email,password)
+      # on get, server store session to admin user
+      @http.get("/setup/setup-admin-settings.jsp") do |res|
+        raise ResponceException.new("can't get admin settings", res) unless res.code == "200"
+      end
       @http.post("/setup/setup-admin-settings.jsp",{"continue"=>"Continue",
                  "email"=>email,
                  "newPassword"=>password,

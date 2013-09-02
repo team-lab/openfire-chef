@@ -1,7 +1,7 @@
 Description
 ===========
 
-Install the [Openfire Jabber server](http://www.igniterealtime.org/) from source.
+Install the [Openfire Jabber server](http://www.igniterealtime.org/) from source or rpm.
 
 # Requirements
 The following Chef cookbooks should be installed:
