@@ -1,6 +1,17 @@
+begin
+  require 'openfire_admin'
+rescue LoadError => e
+  Chef::Log.warn("Missing gem 'openfire_admin'")
+  module ::OpenfireAdmin
+    def self(*args); Client.new(args); end
+    class Client
+      def initialize(*args)
+      end
+    end
+  end
+end
 class Chef::Recipe::Openfire
-  require File.join(File.dirname(__FILE__),"openfire_admin")
-  class WhyrunAdmin < OpenfireAdmin
+  class WhyrunAdmin < ::OpenfireAdmin::Client
     attr_accessor :not_setuped
     def server_stopped?
       @server_stopped

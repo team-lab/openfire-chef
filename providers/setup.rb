@@ -5,9 +5,9 @@ def create_admin_user
   config = new_resource.config
   console = new_resource.console.merge(:user=>"admin")
   temp_admin_client = Chef::Recipe::Openfire.client(console)
-  if temp_admin_client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) or !temp_admin_client.client.user_exists?( config[:admin_console][:user] )
+  if temp_admin_client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin) or !temp_admin_client.users.exists?( config[:admin_console][:user] )
     converge_by("create user #{config[:admin_console][:user]}") do
-      temp_admin_client.client.create_user(
+      temp_admin_client.users.create(
         new_resource.console[:user],
         new_resource.console[:password],
         new_resource.console[:user],

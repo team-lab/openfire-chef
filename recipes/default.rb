@@ -1,3 +1,4 @@
+chef_gem 'openfire_admin'
 
 node.default[:openfire][:home_dir] = "#{node[:openfire][:base_dir]}/openfire"
 
@@ -24,7 +25,7 @@ end
 
 openfire_config_xml '/etc/openfire/openfire.xml' do
   group node[:openfire][:group]
-  mode '0600'
+  mode '0644'
   owner node[:openfire][:user]
   config node[:openfire][:config]
   database node[:openfire][:database]
