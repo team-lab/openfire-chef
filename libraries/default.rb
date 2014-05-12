@@ -17,14 +17,14 @@ class Chef::Recipe::Openfire
       @server_stopped = s
     end
     def method_missing(name, *args)
-      if @clinet
+      if @client
         @client.send name, *args
       else
         case name.to_s
         when "logined?"
           false
         else
-          Chef::Log.warn("call undefined method #{name}")
+          Chef::Log.warn("CALL OpenfireAdmin.#{name}")
           nil
         end
       end
@@ -80,7 +80,22 @@ class Chef::Recipe::Openfire
     else
       require 'openfire_admin' unless OpenfireAdmin.const_defined?('Client')
       client = OpenfireAdmin.new(baseurl)
-      client.login(params[:user], params[:password]) unless client.setup_mode?
+      connection_try = params[:connection_try] || 10
+      connected = false
+      until connected
+        begin
+          client.login(params[:user], params[:password]) unless client.setup_mode?
+          connected = true
+        rescue Errno::ECONNREFUSED => e
+          if connection_try > 0
+            Chef::Log.info("CONNECTION REFUSED #{connection_try} #{e}")
+            sleep(1)
+            connection_try -= 1
+          else
+            raise e
+          end
+        end
+      end
     end
     client
   end

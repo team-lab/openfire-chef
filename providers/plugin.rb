@@ -19,11 +19,16 @@ action :install do
         @client.install_plugin(new_resource.url)
       end
     else
-      plugin = @client.available_plugins[new_resource.name]
-      raise "can't find plugin key '#{new_resource.name}'" unless plugin
-      converge_by("install from available plguins \"#{plugin.name}\"") do
-        plugin.install
-      end
+      plugins = @client.available_plugins
+      if plugins.nil? and @client.is_a?(Chef::Recipe::Openfire::WhyrunAdmin)
+        events.whyrun_assumption(@action,@resource, "Can't check available_plugins #{@client.status}" )
+		  else
+			  plugin = plugins[new_resource.name]
+        raise "can't find plugin key '#{new_resource.name}'" unless plugin
+        converge_by("install from available plguins \"#{plugin.name}\"") do
+          plugin.install
+        end
+			end
     end
   end
 end
