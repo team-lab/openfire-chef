@@ -1,3 +1,4 @@
+node.default[:openfire][:rpm_file] = "openfire-#{node[:openfire][:version]}-#{node[:openfire][:release]}.i386.rpm"
 local_rpm_path = "#{Chef::Config[:file_cache_path]}/#{node[:openfire][:rpm_file]}"
 
 version=`rpm -q --queryformat='\%{VERSION}-\%{RELEASE}' openfire`
