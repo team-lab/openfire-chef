@@ -25,6 +25,7 @@ action :create do
     @doc = REXML::Document.new('<?xml version="1.0" encoding="UTF-8"?>')
     @doc.add_element("jive")
   end
+  @doc.context[:attribute_quote] = :quote
   config = new_resource.config
   database = new_resource.database
   if config[:admin_console]
@@ -50,7 +51,7 @@ action :create do
   else
     xml "databse", nil
   end
-  content = @doc.to_s.sub("<?xml version='1.0' encoding='UTF-8'?>",'<?xml version="1.0" encoding="UTF-8"?>')
+  content = @doc.to_s
   file new_resource.name do
     content content
     owner new_resource.owner
