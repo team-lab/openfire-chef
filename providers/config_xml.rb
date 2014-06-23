@@ -4,10 +4,14 @@ end
 require 'rexml/document'
 def tr_xml(doc, path, value)
   if path.size == 0
-    if value.nil?
-      doc.remove
+    if doc.attributes['encrypted']=='true'
+      Chef::Log.warn("#{doc.xpath} is encrypted and it can't set value")
     else
-      doc.text = value.to_s
+      if value.nil?
+        doc.remove
+      else
+        doc.text = value.to_s
+      end
     end
   else
     doc.add_element(path[0]) unless doc.elements[path[0]]
