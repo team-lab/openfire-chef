@@ -55,7 +55,7 @@ action :create do
   else
     xml "databse", nil
   end
-  content = @doc.to_s
+  content = @doc.to_s.sub("<?xml version='1.0' encoding='UTF-8'?>",'<?xml version="1.0" encoding="UTF-8"?>')
   file new_resource.name do
     content content
     owner new_resource.owner
