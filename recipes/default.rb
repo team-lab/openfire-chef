@@ -1,4 +1,6 @@
-chef_gem 'openfire_admin'
+chef_gem 'openfire_admin' do
+  version '0.0.4'
+end
 
 node.default[:openfire][:home_dir] = "#{node[:openfire][:base_dir]}/openfire"
 

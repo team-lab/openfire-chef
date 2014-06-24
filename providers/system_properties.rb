@@ -20,6 +20,10 @@ action :update do
     end
   }
   diffs.map{|k,v|
+    if v[:old] == :hide
+      Chef::Log.warn("can't change #{k} (hidden value)")
+      next
+    end
     message = if v[:whyrun]
                 v[:new] ? "set #{k} to #{v[:new]}" : "remove #{k}"
               elsif v[:old]
