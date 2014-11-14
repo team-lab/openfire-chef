@@ -44,9 +44,10 @@ openfire_config_xml '/etc/openfire/openfire.xml' do
   notifies :restart , "service[openfire]"
 end
 
-service "openfire" do
-  supports :status => true, 
-           :stop => true
+service 'openfire' do
+  supports :status => true,
+           :stop => true,
+           :restart => true
   action [ :enable, :start ]
+  subscribes :restart, 'template[/etc/sysconfig/openfire]', :immediately
 end
-
