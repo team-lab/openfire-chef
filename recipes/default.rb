@@ -4,6 +4,16 @@ end
 
 node.default[:openfire][:home_dir] = "#{node[:openfire][:base_dir]}/openfire"
 
+case node[:platform_family]
+when "debian", "ubuntu"
+  # on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
+  # make a symlink so that openfirectl is happy
+  link '/etc/sysconfig' do
+    to '/etc/default'
+    only_if { node[:platform_family] == 'debian' }
+  end
+end
+
 case node[:openfire][:install_method]
 when "rpm"
   include_recipe 'openfire::rpm'
@@ -34,19 +44,10 @@ openfire_config_xml '/etc/openfire/openfire.xml' do
   notifies :restart , "service[openfire]"
 end
 
-case node[:platform_family]
-when "debian", "ubuntu"
-  # on Debian/Ubuntu we use /etc/default instead of /etc/sysconfig
-  # make a symlink so that openfirectl is happy
-  link '/etc/sysconfig' do
-    to '/etc/default'
-    only_if { node[:platform_family] == 'debian' }
-  end
-end
-
-service "openfire" do
-  supports :status => true, 
-           :stop => true
+service 'openfire' do
+  supports :status => true,
+           :stop => true,
+           :restart => true
   action [ :enable, :start ]
+  subscribes :restart, 'template[/etc/sysconfig/openfire]', :immediately
 end
-
